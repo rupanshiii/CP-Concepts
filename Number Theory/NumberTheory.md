@@ -106,3 +106,36 @@ But in C++, when we take (-a % m), the remainder we get is actually negative.
 So when we divide -13 by 5, it treats it as a positive number and subtracts 5*(-2) = -10 from it, leaving the remainder as -3.
 So to fix this, we add an extra modulo addition operation in subtraction
 > Note that in C++  5 / (-3) = -1 and consequently, 5 % (-3) = 2
+
+# Exponentiation
+1. They are different, LHS is actually 2^12
+`(2^3)^4 != 2^(3^4)`
+
+2. Never ever use `pow()` to calculate `a^b`. Reason? 
+    - it has the same time complexity as calculating the value using a for loop which is `O(b)`.
+    - `pow()` uses floating-point (double) arithmetic, and double cannot represent every number exactly, especially large integers. So even if the mathematical answer is an exact integer, `pow()` may internally store a very close approximation instead. When you convert that result back to an integer, that tiny error can produce a wrong answer.
+    - In the problems involving modulo, the answer may overflow when we use pow function.
+``` cpp
+ll calcPower(ll a, ll b){
+    ll ans = 1;
+    for(ll i=1; i<=b; i++) ans *= a;
+    return ans;
+}
+```
+
+3. We need to calculate `a^b` sometimes when `b>1e9`. We cannot directly use the for loop because of time complexity.
+
+So reduce the TC, we optimize it by using a simple formula:
+`if(b is even) a^b = a^(b/2) * a^(b/2)` 
+`if(b is odd) a^b = a^(b/2) * a^(b/2) * a` 
+we know that `a^0 = 1` => so that's the base condition
+
+[Code Link](\2.NT.BinaryExponentiation.cpp)
+``` cpp
+ll exp(ll a, ll b){
+    if(b == 0) return 1; // base condition
+    ll x = exp(a, b/2); // x = a^(b/2)
+    if(b%2 == 0) return x*x;
+    else return x*x*a;
+}
+```
