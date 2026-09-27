@@ -41,8 +41,9 @@ ll mul(ll x, ll y)  { return (x%MOD * y%MOD)%MOD; }
 ll exp(ll a, ll b){
     if(b == 0) return 1; // base condition
     ll x = exp(a, b/2); // x = a^(b/2)
-    if(b%2 == 0) return x*x;
-    else return x*x*a;
+    // x will always be less that MOD, because that's how we are returning the answer in the later steps
+    if(b%2 == 0) return (x * x)%MOD; 
+    else return (((x * x)%MOD) * (a%MOD))%MOD;
 }
 
 void solve(){

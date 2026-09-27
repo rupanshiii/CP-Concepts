@@ -126,11 +126,11 @@ ll calcPower(ll a, ll b){
 3. We need to calculate `a^b` sometimes when `b>1e9`. We cannot directly use the for loop because of time complexity.
 
 So reduce the TC, we optimize it by using a simple formula:
-`if(b is even) a^b = a^(b/2) * a^(b/2)` 
-`if(b is odd) a^b = a^(b/2) * a^(b/2) * a` 
-we know that `a^0 = 1` => so that's the base condition
+- `if(b is even) a^b = a^(b/2) * a^(b/2)` 
+- `if(b is odd) a^b = a^(b/2) * a^(b/2) * a` 
+- we know that `a^0 = 1` => so that's the base condition
 
-[Code Link](\2.NT.BinaryExponentiation.cpp)
+[Code Link](2.NT.BinaryExponentiation.cpp)
 ``` cpp
 ll exp(ll a, ll b){
     if(b == 0) return 1; // base condition
@@ -139,3 +139,73 @@ ll exp(ll a, ll b){
     else return x*x*a;
 }
 ```
+
+Time complexity: `O(log b base 2)`
+- How? because each time we are calculating the half of the answer and using it to calculate the complete value, we keep halving until becomes 0
+
+# GCD
+GCD is the greatest common divisor between two numbers. The brute force way to calculate GCD is to find all the factors of both the numbers and whichever is the largest common factor would be the GCD. TC for this approach: `O(sqrt(n))`
+
+## Euclidean Algorithm:
+
+`gcd(a, b) = gcd(b%a, a)`
+and when a = 0, b is the solution
+
+> `!!!` Check out the proof once - it may be helpful in some problems `!!!`
+
+gcd(10, 25) = gcd(5, 10) = gcd(0, 5) => gcd = 5
+
+``` cpp
+ll gcd(ll a, ll b){
+    if(a == 0) return b;
+    return gcd(b%a, a);
+}
+```
+
+Worst case of this approch is Fibonacci sequence, so taking any two consecutive numbers of the sequence would iteratively go backward in the fibonacci series as it will keep subtracting, and since fibonacci numbers are almost double of the previous number, we can safely say that the worst case time complexity of this approach is `O(log(min(a, b)))`
+
+In built `__gcd()` function also uses the same algo
+
+## Properties:
+- GCD can be represented as product of `min(pi^ai, pi^bi)` for each prime factor `pi`
+- `gcd(a, b, c, ...) = gcd(gcd(gcd(a, b), c), ...)`
+- `gcd(a, a+1) = 1`
+    - Proof (using euclidean algo)
+    ``` cpp 
+    gcd(a, a+1) = gcd((a+1)%a, a)
+                = gcd((a+1)%a, a)
+                = gcd((a%a + 1%a)%a, a)
+                = gcd(1, a)
+                = gcd(a%1, 1)
+                = gcd(0, 1)
+                = 1
+    ```
+
+# LCM
+
+```cpp
+lcm(a, b) = (a * b) / gcd(a, b)
+```
+
+This is completely wrong:
+```cpp
+lcm(a, b, c) != ((a * b * c) / gcd(a, b, c))
+```
+This is the right way:
+```cpp
+lcm(a, b, c) = lcm(lcm(a, b), c)
+```
+
+## Properties:
+- LCM can be represented as product of `max(pi^ai, pi^bi)` for each prime factor `pi`
+- `lcm(a, b, c, ...) = lcm(lcm(lcm(a, b), c), ...)`
+- `lcm(a, b) * gcd(a, b) = a*b`
+    - Proof
+    ``` cpp
+    if max(a, b) = a, then min(a, b) = b
+    if max(a, b) = b, then min(a, b) = a
+    which means that max(a, b) + min(a, b) = a + b
+    now lcm is the product of the max of each prime factor
+    and gcd is the product of the min of each prime factor
+    So multiplying both of them eventually adds of the min and max power
+    ```
