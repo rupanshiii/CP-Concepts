@@ -13,6 +13,7 @@ let say a>sqrt(n) and b>sqrt(n) => a*b>n which contradicts it
 
 ## Sieve of Eratosthenes:
 - Used to find all the prime numbers upto a given limit
+- Main idea behind this algo is instead of finding all the primes in a range, we are finding all the composites, and the remaining numbers are automatically left as prime
 - Basic concept is that every composite number C must have a prime factor P < C
 - we will keep marking all the multiples of the prime number (or the unmarked numbers going in order from 2) as non prime, at the end all the numbers that are not marked are prime
 - idea is that if a number is not marked by any of the prime factors before it, it must be prime
@@ -36,6 +37,23 @@ vector<ll> seive(ll n){
 
 > note that we can consider that this time complexity is approximately equal to O(n) only since ln(ln(1e18)) = 4
 
+Interesting:
+- We can approximately calculate the time complexity of seive as O(nlogn)
+``` cpp
+// as already mentioned, the time complexity of seive will be:
+n*(1/2 + 1/3 + 1/5 + 1/7 + ... + 1/(last prime))
+
+// now let's boil it down to
+n*(1/2 + 1/3 + 1/4 + 1/5 + ..... + 1/n)
+
+// let's change a few numbers to their neighboring number - we will only be increasing the overall term so that won't reduce the time complexity, it would just increase it, which is fine, as we are only finding the approximate
+n*(1/2 + 1/2 + 1/4 + 1/4 + 1/4 + 1/4 + 1/8 + .... )
+
+// now, we can directly see that combining these terms would result in a few 1's and that would be logn 1's
+// so time complexity becomes n*logn
+
+```
+
 
 # Prime Factorization:
 
@@ -57,6 +75,44 @@ vector<ll> seive(ll n){
 - note that this is true in the case when only one divisor is remaining
     - `n = a * b` (`a = b` or `a != b`) and both of them remains to be processed. This case cannot happen, because if `n = a * b`, one of `a, b <=sqrt(n)`, so one of them will definitely be processed during the loop
 - code in [this file](1.NT.TrialDivision.cpp)
+
+## Using Seive
+- The basic idea is how we used to prime factorize a number in our childhood, that is finding the smallest prime factor of the current number, divide that number and again finding the smallest prime factor:
+```
+2 | 20
+  |___
+2 | 10
+  |___
+5 | 5
+  |___
+  | 1
+  |___
+```
+- now to find the smallest prime factor of all of those numbers in O(1) time, we just store the spf of all the numbers beforehand
+- This is done through seive
+``` cpp
+vector<ll> seive(ll n){
+    vector<ll> spf(n+1, -1);
+    for(ll i=2; i<=n; i++){
+        if(spf[i] == -1){
+            spf[i]=i;
+            for(ll j=i*i; j<=n; j++){
+                if(spf[j]==-1) spf[j]=i;
+            }
+        }
+    }
+    return spf;
+}
+
+// Time Complexity: O(log(n)) - because in the worst case it way go like 2^x
+void primeFactorize(ll n){
+    vector<ll> spf = seive(n);
+    while(n>1){
+        cout<<spf[n]<<" ";
+        n /= spf[n];
+    }
+}
+```
 
 # Modulo Arithmetic:
 Arithmetic operations involving modulo. It is used whne we need to print very very large numbers
@@ -107,6 +163,90 @@ So when we divide -13 by 5, it treats it as a positive number and subtracts 5*(-
 So to fix this, we add an extra modulo addition operation in subtraction
 > Note that in C++  5 / (-3) = -1 and consequently, 5 % (-3) = 2
 
+### Division
+
+> Note: Read this section after reading the binary exponentiation
+
+> Note that we perform modular division only when `a` isatually divisible by `b` 
+
+We cannot simply apply the division as we did for addition and other rules because 
+``` cpp
+(a/b)%m != ((a%m) / (b%m))%m
+```
+even if a is divisible by b, this statement can change the whole definition
+Example, `a = 12, b = 4, m = 5`
+- LHS: `(12/4)%5 = 3%5 = 3`
+- RHS: `((12%5) / (4%5))%5 = (2 / 4)%5 = 0`
+
+So we do something called as **Modular Inverse** \
+In modulo, we can we can write 
+``` cpp
+(a/b)%m = (a * inv(b))%m
+``` 
+where `inv(b)` can be think of a number `i` such that 
+``` cpp
+(b * i)%m = 1 or `(b * i) ≡ 1 (mod m)` 
+```
+(mathematical representation - just a way of writing)
+
+But finding the inverse is very difficult, because we need to iterate over all the numbers within the range and check whether its product with `b` modulo `m` is equal to 1.
+
+So here comes the Fermat's Little Theorem: \
+for prime `m`
+
+`x`<sup>`m-1`</sup> `% m = 1` \
+`x`<sup>`m-1`</sup> `≡ 1 (mod m)`
+
+Dividing both sides by x \
+`x`<sup>`m-2`</sup> ≡ $\frac{1}{x}$ `(mod m) ≡ x`<sup>`-1`</sup> `(mod m)` 
+
+which means that `x`<sup>`m-2`</sup> is a valid inverse of `x`
+which can be easily calculates using binary exponentiation
+
+> Note that Fermat's little Theorem works only when x and m are coprime
+
+``` cpp
+ll const m = 1e9+7;
+
+ll mul(ll a, ll b){
+    return ((a%m) * (b%m))%m;
+}
+
+ll exp(ll a, ll b){
+    if(b == 0) return 1;
+    ll half = exp(a, b/2);
+    if(b%2 == 1) return mul(mul(half, half), b);
+    else return mul(half, half);
+}
+
+ll inv(ll a){
+    return exp(a, m-2);
+}
+
+ll div(ll a, ll b){
+    return mul(a, inv(b));
+}
+```
+
+**Use case:** \
+It is used when the division is guaranteed to be integral without any decimal left over, for example, factorial division:
+
+``` cpp
+vector<ll> fact(101);
+
+ll ncr(ll n, ll r){
+    return div(fact[n], mul(fact[r], fact[n-r]));
+}
+
+void factorial(){
+    fact[0] = fact[1] = 1;
+    for(ll i=2; i<=100; i++){
+        fact[i] = mul(fact[i-1], i);
+    }
+}
+```
+
+
 # Exponentiation
 1. They are different, LHS is actually 2^12
 `(2^3)^4 != 2^(3^4)`
@@ -147,7 +287,22 @@ Time complexity: `O(log b base 2)`
 GCD is the greatest common divisor between two numbers. The brute force way to calculate GCD is to find all the factors of both the numbers and whichever is the largest common factor would be the GCD. TC for this approach: `O(sqrt(n))`
 
 ## Euclidean Algorithm:
-
+gcd(a, b) cannot be greater than |a-b|.
+Proof: let a < b and gcd(a,b) = g > b - a
+``` cpp
+=> a = g*x
+=> b >= g*(x+1)
+=> b-a >= g*(x+1 - x)
+=> b-a >= g
+```
+also
+``` cpp
+Let g = gcd(a, b)
+a = x*g and b = y*g
+=> (a-b) = (x-y)*g
+=> g divides (a-b) as well
+```
+=> `gcd(a, b) = gcd(b, a-b) where a>b`
 `gcd(a, b) = gcd(b%a, a)`
 and when a = 0, b is the solution
 
@@ -167,6 +322,7 @@ Worst case of this approch is Fibonacci sequence, so taking any two consecutive 
 In built `__gcd()` function also uses the same algo
 
 ## Properties:
+- `gcd(0, n) = n`
 - GCD can be represented as product of `min(pi^ai, pi^bi)` for each prime factor `pi`
 - `gcd(a, b, c, ...) = gcd(gcd(gcd(a, b), c), ...)`
 - `gcd(a, a+1) = 1`
@@ -180,6 +336,11 @@ In built `__gcd()` function also uses the same algo
                 = gcd(0, 1)
                 = 1
     ```
+- if we have an array `a = [a0, a1, a2, ... , an]`, then 
+``` cpp
+gcd(a) = gcd(a0, a1, a2, ... , an) = gcd(a0, a1-a0, a2-a0, ... , an-a0) 
+```
+and its one of the very important property, coz we are correlating the gcd with addition / subtraction operation, this property is getting used in [this question](/Number%20Theory/P7.A_Row_GCD.cpp)
 
 # LCM
 
