@@ -25,7 +25,7 @@ vector<ll> seive(ll n){
     prime[0] = prime[1] = 0;
     for(ll i=2; i*i<=n; i++){ // note that you do not have to go all the way till n, now the reasoning comes from the inner loop, that we start it from i*i till n, if i*i>n, there is no point in iterating over those values
 
-        if(prime[i] == 0){
+        if(prime[i] == 1){
 
             for(ll j=i*i; j<=n; j+=i) prime[i] = 0; // we are not marking the numbers from 2*i, 3*i, 4*i to (i-1)*i because those numbers contain one of the factor < i and hence, they would already be marked by the prime factors < i, so this reduces the time complexity
         }
@@ -205,6 +205,16 @@ which can be easily calculates using binary exponentiation
 
 > Note that Fermat's little Theorem works only when x and m are coprime
 
+Let inverse of a = x\
+`ax % m = 1`\
+`ax = my + 1`\
+`ax - my = 1 ----> LDE`\
+LDE states that for this equation to have integer solution for `x` and `y =>
+c % gcd(a, m) `should be equal to `0`\
+`=> 1 % gcd(a, m) == 0`\
+This is possible only when `gcd(a, m) = 1`\
+Hence, `a` and `m` must be coprime
+
 ``` cpp
 ll const m = 1e9+7;
 
@@ -286,7 +296,18 @@ Time complexity: `O(log b base 2)`
 # GCD
 GCD is the greatest common divisor between two numbers. The brute force way to calculate GCD is to find all the factors of both the numbers and whichever is the largest common factor would be the GCD. TC for this approach: `O(sqrt(n))`
 
+Brute Force:
+``` cpp
+for(int i=min(a, b); i>=1; i--){
+    if(a%i == 0 && b%i == 0) return i; 
+}
+
+// Time complexity: O(min(a, b))
+```
+
 ## Euclidean Algorithm:
+
+### Basics:
 gcd(a, b) cannot be greater than |a-b|.
 Proof: let a < b and gcd(a,b) = g > b - a
 ``` cpp
@@ -302,11 +323,18 @@ a = x*g and b = y*g
 => (a-b) = (x-y)*g
 => g divides (a-b) as well
 ```
-=> `gcd(a, b) = gcd(b, a-b) where a>b`
-`gcd(a, b) = gcd(b%a, a)`
-and when a = 0, b is the solution
+=> `gcd(a, b) = gcd(b, a-b) where a>b` \
+=> `gcd(a, b) = gcd(b, a-2b)` \
+=> `gcd(a, b) = gcd(b, a-nb)` \
+=> `a-nb >= 0` \
+=> `n <= a/b` \
+=> `a-nb = a%b` 
 
-> `!!!` Check out the proof once - it may be helpful in some problems `!!!`
+### Algo:
+```cpp
+gcd(a, b) = gcd(b%a, a) = gcd(b, a%b)
+```
+and when a = 0, b is the solution -> base case
 
 gcd(10, 25) = gcd(5, 10) = gcd(0, 5) => gcd = 5
 
@@ -317,9 +345,10 @@ ll gcd(ll a, ll b){
 }
 ```
 
-Worst case of this approch is Fibonacci sequence, so taking any two consecutive numbers of the sequence would iteratively go backward in the fibonacci series as it will keep subtracting, and since fibonacci numbers are almost double of the previous number, we can safely say that the worst case time complexity of this approach is `O(log(min(a, b)))`
+Worst case of this approch is Fibonacci sequence, so taking any two consecutive numbers of the sequence would iteratively go backward in the fibonacci series as it will keep subtracting, and since fibonacci numbers are almost double of the previous number, we can safely say that the worst case time complexity of this approach is `O(log(min(a, b)) base phi(1.14))`
 
 In built `__gcd()` function also uses the same algo
+> Always use abs numbers inside the built in function: `__gcd(abs(a), abs(b))`. Because some people claim that otherwise it gives wrong answer sometimes.
 
 ## Properties:
 - `gcd(0, n) = n`
@@ -341,6 +370,9 @@ In built `__gcd()` function also uses the same algo
 gcd(a) = gcd(a0, a1, a2, ... , an) = gcd(a0, a1-a0, a2-a0, ... , an-a0) 
 ```
 and its one of the very important property, coz we are correlating the gcd with addition / subtraction operation, this property is getting used in [this question](/Number%20Theory/P7.A_Row_GCD.cpp)
+
+- `gcd(a, b) = gcd(abs(a), abs(b))`
+- in any case, max value of `gcd(a, b) = min(a, b)`
 
 # LCM
 
@@ -370,3 +402,74 @@ lcm(a, b, c) = lcm(lcm(a, b), c)
     and gcd is the product of the min of each prime factor
     So multiplying both of them eventually adds of the min and max power
     ```
+    - Easy Proof
+    ``` cpp
+    gcd(a, b) = g
+    a = x * g (x is the distinct multiple of a)
+    b = y * g (y is the distinct multiple of b)
+    a*b = x*y*g*g (we have an extra g here)
+    so lcm(a, b) = (a*b) / g
+    => lcm (a, b) * gcd(a, b) = (a * b)
+    ```
+
+# Extended Euclid's Algo:
+> Rare to see qs on this topic: 
+
+We have an equation of the form below and we want to find the integral solution of x and y
+`ax + by = gcd(a, b)`
+``` cpp
+gcd(b%a, a) = (b%a)x1 + ay1  
+
+now we know that:
+    b%a = b - floor(b/a).a
+
+Replacing it in the above equation
+gcd(b%a, a) = (b - floor(b/a)a)x1 + ay1
+            = a(y1 - floor(b/a)x1) + bx1
+
+gcd(a, b)   = aX + bY
+
+Hence,
+x = y1 - floor(b/a)x1
+y = x1
+
+Now as we propagate below in gcd, at some point we get:
+gcd(0, b) = b
+gcd(0, b) = ax + by
+b = ax + by
+x = 0 and y = 1 
+```  
+
+[Code here](\3.NT.ExtendedEuclidAlgo.cpp)
+
+## LDE (Linear Diophantine Equation)
+Use case of Extended Euclid's algorithm
+
+We have equation `ax + by = c -- a, b, c => integers`
+We are asked to find the integral solution of x and y
+
+`ax + by = c`\
+`ax + by = c.`$\frac{g}{g}$\
+`a.`$\frac{g}{c}$`x + b.`$\frac{g}{c}$`y = g`\
+`a.X + b.Y = g` => this is extended euclid's algo and it always has a solution
+
+So to find x and y, we can just solve the extended euclid equation and find X and Y, and use them to find x and y in the original equation.
+
+`X = `$\frac{g}{c}$`.x`\
+`x = `$\frac{c}{g}$`.X`\
+and similarly:\
+`x = `$\frac{c}{g}$`.Y`
+
+> This equation will have a solution only if `c%g == 0`\
+If c%g == 0 -> infinite integer solution\
+If c%g != 0 -> 0 integer solution
+
+Now let's try to find the infinite solution:\
+`ax' + by' = c`\
+`ax' + by' +` $\frac{a.b}{g}$ - $\frac{a.b}{g}$` = c`\
+`a(x' + `$\frac{b}{g}$`) + b(y' - `$\frac{b}{g}$`) = c`\
+Hence, the infinite solutions would be: \
+`x = (x' + `$\frac{b}{g}$`)*k` and \
+`y = (y' - `$\frac{b}{g}$`)*k` where k is integer
+
+
